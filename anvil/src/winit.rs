@@ -90,10 +90,14 @@ pub fn run_winit(
     });
 
     let start_time = std::time::Instant::now();
+    let mut last_time = std::time::Instant::now();
 
     info!(log, "Initialization completed, starting the main loop.");
 
     while state.running.load(Ordering::SeqCst) {
+        let delta_time = last_time.elapsed();
+        last_time = std::time::Instant::now();
+
         input
             .dispatch_new_events(|event, _| state.process_input_event(event))
             .unwrap();
@@ -141,6 +145,11 @@ pub fn run_winit(
                 } else {
                     drawer.draw_hardware_cursor(&CursorIcon::Default, (0, 0), (x as i32, y as i32));
                 }
+            }
+
+            // Draw fps counter
+            {
+                drawer.draw_fps_counter(&mut frame, &delta_time);
             }
 
             if let Err(err) = frame.finish() {

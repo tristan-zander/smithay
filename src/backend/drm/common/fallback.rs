@@ -19,6 +19,7 @@ use crate::backend::drm::{
 use crate::backend::egl::context::{GlAttributes, PixelFormatRequirements};
 #[cfg(feature = "backend_drm_egl")]
 use crate::backend::egl::native::{Backend, NativeDisplay, NativeSurface};
+// #[cfg(feature = "backend_drm_egl")]
 use crate::backend::egl::Error as EGLError;
 #[cfg(feature = "use_system_lib")]
 use crate::backend::egl::{display::EGLBufferReader, EGLGraphicsBackend};
