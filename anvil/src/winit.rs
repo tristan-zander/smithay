@@ -47,6 +47,7 @@ pub fn run_winit(
 
     let (w, h) = renderer.get_framebuffer_dimensions();
     let drawer = GliumDrawer::init(renderer, buffer_utils.clone(), log.clone());
+    let mut text_renderer = crate::text_rendering::FontRenderer::new(&drawer.display);
 
     /*
      * Initialize the globals
@@ -149,7 +150,9 @@ pub fn run_winit(
 
             // Draw fps counter
             {
-                drawer.draw_fps_counter(&mut frame, &delta_time);
+                let program = opengl_programs!(&drawer.display);
+                let display = &drawer.display;
+                text_renderer.render_text("FPS: ", (0.0, 0.0), &mut frame, display, &program[0]);
             }
 
             if let Err(err) = frame.finish() {

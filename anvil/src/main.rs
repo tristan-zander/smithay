@@ -20,6 +20,7 @@ mod input_handler;
 mod shell;
 mod shm_load;
 mod state;
+mod text_rendering;
 #[cfg(feature = "udev")]
 mod udev;
 mod window_map;

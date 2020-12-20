@@ -4,7 +4,7 @@ use std::{
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
 };
 
-use glium::{self, index::PrimitiveType, texture::Texture2d, Surface, backend::Facade};
+use glium::{self, index::PrimitiveType, texture::Texture2d, Surface};
 use slog::Logger;
 
 use smithay::{
@@ -23,8 +23,8 @@ use smithay::{
 };
 
 use crate::buffer_utils::BufferUtils;
-use crate::shaders;
 use crate::shell::{MyCompositorToken, MyWindowMap, SurfaceData};
+use crate::{shaders, text_rendering::FontRenderer};
 
 pub static BACKEND_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
@@ -185,48 +185,6 @@ impl<F: GLGraphicsBackend + !CursorBackend + 'static> GliumDrawer<F> {
 */
 
 impl<F: GLGraphicsBackend + 'static> GliumDrawer<F> {
-    pub fn draw_fps_counter(&self, frame: &mut Frame, time: &std::time::Duration) {
-        // TODO this only has to be created once instead of every iteration.
-        let vert_buffer: glium::VertexBuffer<Vertex> = glium::VertexBuffer::new(&self.display, &[
-            Vertex {
-                position: [0.0, 0.0],
-                tex_coords: [0.0, 0.0]
-            },
-            Vertex {
-                position: [1.0, 0.0],
-                tex_coords: [1.0, 0.0]
-            },
-            Vertex {
-                position: [1.0, 1.0],
-                tex_coords: [1.0, 1.0]
-            },
-            Vertex {
-                position: [0.0, 1.0],
-                tex_coords: [0.0, 1.0]
-            }
-        ]).unwrap();
-
-        let index_buffer = glium::IndexBuffer::new(&self.display, PrimitiveType::TriangleStrip, 
-            &[3 as u16, 2, 0, 1]).unwrap();
-
-        // TODO also include FreeType texture as tex
-        let uniforms = uniform! {
-            matrix: [
-                [1.0f32, 0.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0],
-                [0.0, 0.0, 0.0, 1.0]
-            ]
-        };
-
-        frame.draw(&vert_buffer, &index_buffer, &self.programs[0], &uniforms,
-            &glium::DrawParameters { ..Default::default() }).unwrap();
-        debug!(self.log, "{}", time.as_secs_f64());
-    }
-}
-
-impl<F: GLGraphicsBackend + 'static> GliumDrawer<F> {
-
     pub fn render_texture(&self, target: &mut Frame, spec: RenderTextureSpec<'_>) {
         let xscale = 2.0 * (spec.surface_dimensions.0 as f32) / (spec.screen_size.0 as f32);
         let mut yscale = -2.0 * (spec.surface_dimensions.1 as f32) / (spec.screen_size.1 as f32);
