@@ -31,7 +31,9 @@ mod implement_vertex {
     implement_vertex!(Vertex, position, tex_coords);
 }
 
-impl<'a> FontRenderer<'a> {
+fn render_text(pos: (f32, f32), text: &String) {}
+
+impl FontRenderer<'_> {
     pub fn new<T>(display: &T) -> Self
     where
         T: Facade,
@@ -68,16 +70,16 @@ impl<'a> FontRenderer<'a> {
     }
 
     /// Renders text to the specified point on the screen. Only use positions from -1 to 1
-    pub fn render_text<'b, T>(
+    pub fn render_text<T>(
         &mut self,
         text: &str,
         pos: (f32, f32),
-        frame: &'b mut Frame,
+        frame: &mut Frame,
         display: &T,
         program: &Program,
     ) -> Result<(), ()>
     where
-        T: Facade + 'b,
+        T: Facade,
     {
         // TODO add scale to arguments or check from Winit display
         let scale = Scale { x: 10.0, y: 10.0 };
@@ -90,8 +92,14 @@ impl<'a> FontRenderer<'a> {
         // Create a vertex buffer and index buffer for the glyphs
         // Add that to the frame's draw call
 
-        for g in &glyphs {
-            self.cache.queue_glyph(0, g.clone());
+
+        // SAFETY: rusttype crate expects the text to exist as long as the cache whenever it is passed into
+        // cache.queue_glyph(). This is irrelevant here because the glyph is getting cached as soon as it
+        // is added later in the code. This code is necessary to evade certain lifetime requirements.
+        unsafe {
+            for g in &glyphs {
+                (*(&self.cache as *const Cache<'_> as *mut Cache<'_>)).queue_glyph(0, g.clone());
+            }
         }
 
         {
@@ -173,13 +181,13 @@ impl<'a> FontRenderer<'a> {
 
         let vert_buffer = glium::VertexBuffer::new(display, &vertices).unwrap();
         let uniform = uniform! {
-            matrix: [
+            FloatMat4: [
                 [ 1.0,   0.0  , 0.0, 0.0],
                 [  0.0 , 1.0 , 0.0, 0.0],
                 [  0.0 ,   0.0  , 1.0, 0.0],
                 [   0.0  ,    0.0   , 0.0, 1.0]
             ],
-            //tex: self.cache_tex.sampled()
+            tex: self.cache_tex.sampled()
         };
 
         frame
@@ -198,4 +206,3 @@ impl<'a> FontRenderer<'a> {
         Ok(())
     }
 }
-
